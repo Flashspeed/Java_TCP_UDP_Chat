@@ -22,7 +22,7 @@ public class ChatGUI
     private String windowTitle = "";
     private int xLocation;
     private int yLocation;
-
+    //
     public JTextArea jTxtAreaViewMessageBox = new JTextArea(20, 40);
     public JTextArea jTxtAreaSendMessageBox = new JTextArea(5, 50);
     public JButton   jBtnSend               = new JButton("Send");
