@@ -2,6 +2,7 @@ package Server;
 
 import ChatGUI.ChatGUI;
 
+import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -28,8 +29,9 @@ public class ServerActions
     {
         this.portNumber = portNumber;
         serverGUI.jBtnSend.addActionListener(new ServerSendMessage());
+        serverGUI.jComboMode.addActionListener(new ModeSelectListener());
 
-        serverGUI.jTxtAreaSendMessageBox.addKeyListener(new sendKeyListener());
+        serverGUI.jTxtAreaSendMessageBox.addKeyListener(new SendKeyListener());
     }
 
     void runServer()
@@ -127,7 +129,7 @@ public class ServerActions
         }
     }
 
-    public class sendKeyListener implements KeyListener
+    public class SendKeyListener implements KeyListener
     {
         @Override
         public void keyTyped(KeyEvent e)
@@ -156,6 +158,17 @@ public class ServerActions
                     }
                     break;
             }
+        }
+    }
+
+    public class ModeSelectListener implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            JComboBox modeComboBox = (JComboBox) e.getSource();
+            String selectedItem = ((String)modeComboBox.getSelectedItem()).toLowerCase();
+            JOptionPane.showMessageDialog(null, selectedItem);
         }
     }
 }
