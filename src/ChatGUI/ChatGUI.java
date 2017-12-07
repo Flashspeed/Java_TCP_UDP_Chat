@@ -13,17 +13,18 @@ import java.awt.FlowLayout;
 
 public class ChatGUI
 {
-    private String windowTitle = "";
+    public String windowTitle = "";
     private int xLocation;
     private int yLocation;
 
-    private String[] mode = {"TCP Server", "TCP Client", "UDP Server", "UDP Client"};
+    public String[] mode = {"Choose Mode", "TCP Server", "TCP Client", "UDP Server", "UDP Client"};
 
     public JTextArea jTxtAreaViewMessageBox = new JTextArea(20, 40);
     public JTextArea jTxtAreaSendMessageBox = new JTextArea(5, 50);
 
-    public JTextField jTextFieldServerIP   = new JTextField("Server IP", 10);
-    public JTextField jTextFieldServerPort = new JTextField("Server PORT", 10);
+    public JTextField jTextFieldRemoteIp   = new JTextField("Remote IP", 10);
+    public JTextField jTextFieldRemotePort = new JTextField("Remote PORT", 10);
+    public JTextField jTextFieldLocalPort  = new JTextField("4444", 10);
 
     public JButton jBtnSend  = new JButton("Send");
     public JButton jBtnStart = new JButton("Start");
@@ -63,8 +64,9 @@ public class ChatGUI
         jPanConfig.setBackground(RED);
         jPanConfig.setPreferredSize(new Dimension(200, 200));
         jPanConfig.add(jComboMode);
-        jPanConfig.add(jTextFieldServerIP);
-        jPanConfig.add(jTextFieldServerPort);
+        jPanConfig.add(jTextFieldRemoteIp);
+        jPanConfig.add(jTextFieldRemotePort);
+        jPanConfig.add(jTextFieldLocalPort);
         jPanConfig.add(jBtnStart);
 
         jPMain.setBackground(BLUE);

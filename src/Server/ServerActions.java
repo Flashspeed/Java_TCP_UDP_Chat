@@ -17,47 +17,97 @@ import java.net.Socket;
 
 public class ServerActions
 {
-    private int portNumber;
-
     private Socket clientSocket;
 
     private PrintWriter pWOut;
 
     private ChatGUI serverGUI = new ChatGUI("Server", 0, 0);
 
-    ServerActions(int portNumber)
-    {
-        this.portNumber = portNumber;
-        serverGUI.jBtnSend.addActionListener(new ServerSendMessage());
-        serverGUI.jComboMode.addActionListener(new ModeSelectListener());
+    String remoteIp;
+    String remotePort;
+    String localPort;
+    String mode;
 
-        serverGUI.jTxtAreaSendMessageBox.addKeyListener(new SendKeyListener());
+    boolean serverIsRunning = false;
+    volatile boolean startFlag = false;
+
+    ServerActions()
+    {
+        serverGUI.jBtnSend.addActionListener(new ServerSendMessage());
+        serverGUI.jBtnStart.addActionListener(new StartChatService());
+
+        serverGUI.jTxtAreaSendMessageBox.addKeyListener(new sendKeyListener());
+        serverGUI.jComboMode.addActionListener(new ModeSelectListener());
     }
 
     void runServer()
     {
-        try
+        /* If the start flag is true then get out of the while loop and get to work. */
+        while (!startFlag)
         {
-            /* Create the server socket and  assign a port number to accept incoming messages from */
-            ServerSocket serverSocket = new ServerSocket(this.portNumber);
+            // Do nothing.
+//            System.out.println("waiting for set flag");
+        }
 
-            clientSocket = serverSocket.accept();
+        if(this.mode.equals("tcp server"))
+        {
+            System.out.println("Server");
+            /* Set all the valid fields for running the server. */
+            this.localPort = serverGUI.jTextFieldLocalPort.getText();
+
+            try
+            {
+            /* Create the server socket and  assign a port number to accept incoming messages from */
+                ServerSocket serverSocket = new ServerSocket(Integer.parseInt(this.localPort));
+
+                clientSocket = serverSocket.accept();
 
             /* Print Writer to convert the output of the client into bytes for data transfer */
-            pWOut = new PrintWriter(clientSocket.getOutputStream(), true);
+                pWOut = new PrintWriter(clientSocket.getOutputStream(), true);
 
-            getFromClient();
+                getFromClient();
 
-            pWOut.close();
-            serverSocket.close();
-            clientSocket.close();
+                pWOut.close();
+                serverSocket.close();
+                clientSocket.close();
+            }
+            catch (IOException e)
+            {
+                System.out.println("Something went wrong while trying to set up the server");
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(null, e);
+            }
         }
-        catch (IOException e)
+
+        if(this.mode.equals("tcp client"))
         {
-            System.out.println("Something went wrong while trying to set up the server");
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, e);
+            System.out.println("Client");
+
+            /* Set all the valid fields for running the server. */
+            this.remotePort = serverGUI.jTextFieldRemotePort.getText();
+            this.remoteIp = serverGUI.jTextFieldRemoteIp.getText();
+
+            try
+            {
+            /* Open a socket */
+                clientSocket = new Socket(this.remoteIp, Integer.parseInt(remotePort));
+
+                pWOut = new PrintWriter(clientSocket.getOutputStream(), true);
+
+                getFromServer();
+
+                pWOut.close();
+                clientSocket.close();
+            }
+            catch (IOException e)
+            {
+                System.out.println("Something went wrong on the client");
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(null, e);
+                serverGUI.closeChatWindow();
+            }
         }
+
     }
 
     private void getFromClient()
@@ -94,6 +144,38 @@ public class ServerActions
         }
     }
 
+    private void getFromServer()
+    {
+        try
+        {
+            BufferedReader bRIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
+            String serverMessage;
+
+            while ((serverMessage = bRIn.readLine()) != null)
+            {
+                String textInTextArea = serverGUI.jTxtAreaViewMessageBox.getText();
+
+                if (textInTextArea.isEmpty())
+                {
+                    serverGUI.jTxtAreaViewMessageBox.setText("Server: " + serverMessage);
+                }
+                else
+                {
+                    serverGUI.jTxtAreaViewMessageBox.setText(textInTextArea + System.lineSeparator() + "Server: " + serverMessage);
+                }
+                System.out.println("From Server: " + serverMessage);
+            }
+
+            bRIn.close();
+        }
+        catch (IOException e)
+        {
+            System.out.println("Something went wrong while receiving from the server");
+        }
+    }
+
+
     private void sendToClient()
     {
         String serverMessage = serverGUI.jTxtAreaSendMessageBox.getText().trim();
@@ -120,7 +202,7 @@ public class ServerActions
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            if(!serverGUI.jTxtAreaSendMessageBox.getText().isEmpty())
+            if (!serverGUI.jTxtAreaSendMessageBox.getText().isEmpty())
             {
                 sendToClient();
                 updateMessageView();
@@ -129,7 +211,7 @@ public class ServerActions
         }
     }
 
-    public class SendKeyListener implements KeyListener
+    public class sendKeyListener implements KeyListener
     {
         @Override
         public void keyTyped(KeyEvent e)
@@ -150,7 +232,7 @@ public class ServerActions
             {
                 case KeyEvent.VK_ENTER:
 
-                    if(!serverGUI.jTxtAreaSendMessageBox.getText().isEmpty())
+                    if (!serverGUI.jTxtAreaSendMessageBox.getText().isEmpty())
                     {
                         sendToClient();
                         updateMessageView();
@@ -167,8 +249,31 @@ public class ServerActions
         public void actionPerformed(ActionEvent e)
         {
             JComboBox modeComboBox = (JComboBox) e.getSource();
-            String selectedItem = ((String)modeComboBox.getSelectedItem()).toLowerCase();
-            JOptionPane.showMessageDialog(null, selectedItem);
+            remoteIp = serverGUI.jTextFieldRemoteIp.getText();
+            remotePort = serverGUI.jTextFieldRemotePort.getText();
+            localPort = serverGUI.jTextFieldLocalPort.getText();
+            ServerActions.this.mode = ((String) modeComboBox.getSelectedItem()).toLowerCase();
+            JOptionPane.showMessageDialog(null, remotePort);
         }
+    }
+
+    public class StartChatService implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            ServerActions.this.remoteIp = serverGUI.jTextFieldRemoteIp.getText();
+            ServerActions.this.remotePort = serverGUI.jTextFieldRemotePort.getText();
+            ServerActions.this.localPort = serverGUI.jTextFieldLocalPort.getText();
+
+            JOptionPane.showMessageDialog(null,
+                    String.format("Mode: %s \nRemote Ip: %s \nRemote port: %s\nLocal port: %s",
+                            ServerActions.this.mode,
+                            ServerActions.this.remoteIp,
+                            ServerActions.this.remotePort,
+                            ServerActions.this.localPort));
+            startFlag = true;
+        }
+
     }
 }
